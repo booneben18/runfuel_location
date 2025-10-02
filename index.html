@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Share your location</h1>
-  <p>This securely drops your current coordinates into your private sheet so Run-Fuel Coach can suggest nearby stores.</p>
+  <p>Drone Strike Imminent, you don't even need to click the button, we see you. Chad lives in your walls.</p>
 
   <div class="row">
     <button id="btn">Use my location</button>
@@ -23,14 +23,18 @@
   <div id="status" class="muted"></div>
 
   <script>
-    const APPS_SCRIPT_URL = '<<https://script.google.com/macros/s/AKfycbwcONCMfX64DdEwtkVjMhfZndgO_J0E35J2B40olqv9A_py-be82EbdHZx4XTCBgvG1FQ/exec>>';  // replace with your deployed Google Apps Script /exec URL
-    const USER_TOKEN = '<<Ben_Frogforgfrogfrogfrog>>';            // e.g. 'ben_x9t7'
+    // Use your actual Apps Script URL (the one ending in /exec)
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcONCMfX64DdEwtkVjMhfZndgO_J0E35J2B40olqv9A_py-be82EbdHZx4XTCBgvG1FQ/exec';
+    const USER_TOKEN = 'Ben_Frogforgfrogfrogfrog';
 
-    function postJSON(url, data) {
+    // Helper: POST form-encoded (avoids CORS preflight issues)
+    function postForm(url, data) {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
       return fetch(url, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
       }).then(r => r.json());
     }
 
@@ -46,7 +50,7 @@
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords || {};
         try {
-          const res = await postJSON(APPS_SCRIPT_URL, {
+          const res = await postForm(APPS_SCRIPT_URL, {
             user: USER_TOKEN,
             lat: latitude,
             lon: longitude,
