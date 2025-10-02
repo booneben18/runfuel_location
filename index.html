@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Share your location</h1>
-  <p>Drone Strike Imminent, you don't even need to click the button, we see you. Chad lives in your walls.</p>
+  <p>This securely drops your current coordinates into your private sheet so Run-Fuel Coach can suggest nearby stores.</p>
 
   <div class="row">
     <button id="btn">Use my location</button>
@@ -23,11 +23,11 @@
   <div id="status" class="muted"></div>
 
   <script>
-    // Use your actual Apps Script URL (the one ending in /exec)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcONCMfX64DdEwtkVjMhfZndgO_J0E35J2B40olqv9A_py-be82EbdHZx4XTCBgvG1FQ/exec';
-    const USER_TOKEN = 'Ben_Frogforgfrogfrogfrog';
+    // Your deployed Apps Script /exec URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBJR0eLeFflLZyRRQQ8OwjoeCNJa0jr1WjHRpc_uSUIbOKqw5cU56Rwm-Wm1LcoK39eg/exec';
+    const USER_TOKEN = 'Ben_Frogforgfrogfrogfrog'; // keep as-is or change
 
-    // Helper: POST form-encoded (avoids CORS preflight issues)
+    // POST form-encoded to avoid CORS preflight
     function postForm(url, data) {
       const params = new URLSearchParams();
       Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
@@ -42,11 +42,9 @@
     function err(msg) { const s = document.getElementById('status'); s.className='err'; s.textContent = msg; }
 
     document.getElementById('btn').addEventListener('click', () => {
-      if (!navigator.geolocation) {
-        err('Geolocation not supported in this browser.');
-        return;
-      }
+      if (!navigator.geolocation) { err('Geolocation not supported in this browser.'); return; }
       document.getElementById('status').textContent = 'Requesting permission…';
+
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords || {};
         try {
@@ -61,18 +59,13 @@
             ok('Location shared. You can go back to ChatGPT now.');
           } else {
             err('Failed to save: ' + (res && (res.error || JSON.stringify(res)) || 'Unknown error'));
-}
-
+          }
         } catch(e) {
-          err('Network error. Check your connection and try again.');
+          err('Network error: ' + (e && e.message ? e.message : e));
         }
       }, (e) => {
         err(e.message || 'Location permission was denied.');
-      }, {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
-      });
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
     });
   </script>
 </body>
