@@ -1,46 +1,81 @@
-<script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8QXvKfZNe1L-ze11xXjXNJdLYS3LDFBY3RhzbwEDWLAMfLEypeWnriu05LNiRAEGJrQ/exec';
-  const USER_TOKEN = 'Ben_Frogforgfrogfrogfrog';
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Share Location for Run-Fuel Coach</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 540px; margin: 40px auto; padding: 0 16px; }
+    button { padding: 12px 16px; font-size: 16px; border-radius: 10px; border: 1px solid #ccc; cursor: pointer; }
+    .muted { color:#666; font-size: 14px; }
+    .ok { color: #0a7a0a; }
+    .err { color: #b00020; }
+    .row { margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1>Share your location</h1>
+  <p>This securely drops your current coordinates into your private sheet so Run-Fuel Coach can suggest nearby stores.</p>
 
-  // POST form-encoded (no CORS preflight), parse text then try JSON
-  async function postForm(url, data) {
-    const params = new URLSearchParams();
-    Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString()
-    });
-    const text = await res.text();
-    try { return JSON.parse(text); } catch { return { ok: false, error: 'Non-JSON response', raw: text }; }
-  }
+  <div class="row">
+    <button id="btn">Use my location</button>
+  </div>
+  <div id="status" class="muted"></div>
 
-  function ok(msg)  { const s = document.getElementById('status'); s.className='ok';  s.textContent = msg; }
-  function err(msg) { const s = document.getElementById('status'); s.className='err'; s.textContent = msg; }
+  <script>
+    // Your deployed Apps Script /exec URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8QXvKfZNe1L-ze11xXjXNJdLYS3LDFBY3RhzbwEDWLAMfLEypeWnriu05LNiRAEGJrQ/exec';
+    const USER_TOKEN = 'Ben_Frogforgfrogfrogfrog'; // change if you want another ID
 
-  document.getElementById('btn').addEventListener('click', () => {
-    if (!navigator.geolocation) { err('Geolocation not supported in this browser.'); return; }
-    document.getElementById('status').textContent = 'Requesting permission…';
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords || {};
-      try {
-        const res = await postForm(APPS_SCRIPT_URL, {
-          user: USER_TOKEN,
-          lat: latitude,
-          lon: longitude,
-          accuracy_m: accuracy,
-          source: 'device'
-        });
-        if (res && res.ok) {
-          ok('Location shared. You can go back to ChatGPT now.');
-        } else {
-          err('Save failed: ' + (res.error || '') + (res.raw ? ' | raw: ' + res.raw.slice(0,200) : ''));
-        }
-      } catch(e) {
-        err('Network error: ' + (e && e.message ? e.message : e));
+    // POST form-encoded (avoids CORS preflight), parse text then try JSON
+    async function postForm(url, data) {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+      const text = await res.text();
+      try { 
+        return JSON.parse(text); 
+      } catch { 
+        return { ok: false, error: 'Non-JSON response', raw: text }; 
       }
-    }, (e) => {
-      err(e.message || 'Location permission was denied.');
-    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-  });
-</script>
+    }
+
+    function ok(msg)  { const s = document.getElementById('status'); s.className='ok';  s.textContent = msg; }
+    function err(msg) { const s = document.getElementById('status'); s.className='err'; s.textContent = msg; }
+
+    document.getElementById('btn').addEventListener('click', () => {
+      if (!navigator.geolocation) { 
+        err('Geolocation not supported in this browser.'); 
+        return; 
+      }
+      document.getElementById('status').textContent = 'Requesting permission…';
+
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords || {};
+        try {
+          const res = await postForm(APPS_SCRIPT_URL, {
+            user: USER_TOKEN,
+            lat: latitude,
+            lon: longitude,
+            accuracy_m: accuracy,
+            source: 'device'
+          });
+          if (res && res.ok) {
+            ok('Location shared. You can go back to ChatGPT now.');
+          } else {
+            err('Save failed: ' + (res.error || '') + (res.raw ? ' | raw: ' + res.raw.slice(0,200) : ''));
+          }
+        } catch(e) {
+          err('Network error: ' + (e && e.message ? e.message : e));
+        }
+      }, (e) => {
+        err(e.message || 'Location permission was denied.');
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    });
+  </script>
+</body>
+</html>
