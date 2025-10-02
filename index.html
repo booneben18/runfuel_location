@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Share Location for Run-Fuel Coach</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 540px; margin: 40px auto; padding: 0 16px; }
+    button { padding: 12px 16px; font-size: 16px; border-radius: 10px; border: 1px solid #ccc; cursor: pointer; }
+    .muted { color:#666; font-size: 14px; }
+    .ok { color: #0a7a0a; }
+    .err { color: #b00020; }
+    .row { margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1>Share your location</h1>
+  <p>This securely drops your current coordinates into your private sheet so Run-Fuel Coach can suggest nearby stores.</p>
+
+  <div class="row">
+    <button id="btn">Use my location</button>
+  </div>
+  <div id="status" class="muted"></div>
+
+  <script>
+    const APPS_SCRIPT_URL = '<<https://script.google.com/macros/s/AKfycbwcONCMfX64DdEwtkVjMhfZndgO_J0E35J2B40olqv9A_py-be82EbdHZx4XTCBgvG1FQ/exec>>';  // replace with your deployed Google Apps Script /exec URL
+    const USER_TOKEN = '<<Ben_Frogforgfrogfrogfrog>>';            // e.g. 'ben_x9t7'
+
+    function postJSON(url, data) {
+      return fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      }).then(r => r.json());
+    }
+
+    function ok(msg)  { const s = document.getElementById('status'); s.className='ok';  s.textContent = msg; }
+    function err(msg) { const s = document.getElementById('status'); s.className='err'; s.textContent = msg; }
+
+    document.getElementById('btn').addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        err('Geolocation not supported in this browser.');
+        return;
+      }
+      document.getElementById('status').textContent = 'Requesting permission…';
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords || {};
+        try {
+          const res = await postJSON(APPS_SCRIPT_URL, {
+            user: USER_TOKEN,
+            lat: latitude,
+            lon: longitude,
+            accuracy_m: accuracy,
+            source: 'device'
+          });
+          if (res && res.ok) {
+            ok('Location shared. You can go back to ChatGPT now.');
+          } else {
+            err('Failed to save location. Try again.');
+          }
+        } catch(e) {
+          err('Network error. Check your connection and try again.');
+        }
+      }, (e) => {
+        err(e.message || 'Location permission was denied.');
+      }, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    });
+  </script>
+</body>
+</html>
