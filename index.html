@@ -60,8 +60,9 @@
           if (res && res.ok) {
             ok('Location shared. You can go back to ChatGPT now.');
           } else {
-            err('Failed to save location. Try again.');
-          }
+            err('Failed to save: ' + (res && (res.error || JSON.stringify(res)) || 'Unknown error'));
+}
+
         } catch(e) {
           err('Network error. Check your connection and try again.');
         }
